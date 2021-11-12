@@ -103,23 +103,35 @@ int main (int argc, char* argv[]) {
 
   int partitions;
 
-  MPI_Get_size(MPI_COMM_WORLD, &totalProcesses);
-  MPI_Get_rank(MPI_COMM_WORLD, &processNumber);
+  MPI_Comm_size(MPI_COMM_WORLD, &totalProcesses);
+  MPI_Comm_rank(MPI_COMM_WORLD, &processNumber);
 
   partitions = n / totalProcesses;
   double sum = 0;
   std::vector<double> individualSums(1);
   std::vector<double> finalSum(1);
+  int i = 0;
+  if(processNumber > 0){
+  i = processNumber * partitions;
+  }else{
+  i = 1;
+  
+  }
+
+  if(processNumber == totalProcesses - 1){
+  partitions = n + n%totalProcesses;
+  }
 
   int localstart = processNumber * partitions;
 
   std::chrono::time_point<std::chrono::system_clock> start = std::chrono::system_clock::now();
-
+//std::cout<<"I am process "<< processNumber << " out of " << totalProcesses;
   //run itegration here 
   int count = 0;
-  for(int i = 0; i < n; i++){
-
+  for( i; i < n; i++){
+	//std::cout<<"| "<<i<<" |";
   sum += partialIntegrations(functionid, a, b, n, i, intensity);
+  //std::cout<<"| "<<i << " |" << sum << "|";
   count++;
   if(count == partitions ){
 	break;
@@ -129,10 +141,10 @@ int main (int argc, char* argv[]) {
   //end of integration
 
   individualSums[0] = sum;
-
+	//std::cout<< "|before "<< individualSums[0] << " |";
   MPI_Reduce(&(individualSums[0]), &(finalSum[0]), 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 
-  int finalValue = finalSum[0];
+  double finalValue = finalSum[0];
   
   std::chrono::time_point<std::chrono::system_clock> end = std::chrono::system_clock::now();
 
