@@ -20,7 +20,8 @@ float f4(float x, int intensity);
 
 double partialIntegrations(int functionid, double a, double b, int n, int i, int intensity ){
   //partial integrations
-
+  //for full integration add for loop inside this fcuntion
+  
   double fraction = (b - a) / n; //this is calculating the width
     //double second = 0; //this varibale is for the area
     //double sum = 0; // sum of rectangles
@@ -49,42 +50,7 @@ double partialIntegrations(int functionid, double a, double b, int n, int i, int
 	return functionInUse(a + (i+0.5)*fraction, intensity) * fraction;
 }
 
-double integrate(int functionid, double a, double b, int n, int intensity) {
-//fully integrates 
 
-    double fraction = (b - a) / n; //this is calculating the width
-    //double second = 0; //this varibale is for the area
-    double sum = 0; // sum of rectangles
-    float (*functionInUse)(float, int);
-
-    switch (functionid)
-    {
-    case 1:
-      functionInUse = f1;
-      break;
-    case 2:
-      functionInUse = f2;
-      break;
-    case 3:
-      functionInUse = f3;
-      break;
-    case 4:
-      functionInUse = f4;
-      break;
-    default:
-
-      break;
-    }
-
-    for (int i = 0; i < n; i++){
-      
-      sum+= fraction * functionInUse(a + (i+0.5)*fraction, intensity);
-
-}
-
-return sum;
-
-}
 int main (int argc, char* argv[]) {
   MPI_Init(&argc, &argv);
 
@@ -108,8 +74,10 @@ int main (int argc, char* argv[]) {
 
   partitions = n / totalProcesses;
   double sum = 0;
+  
   std::vector<double> individualSums(1);
   std::vector<double> finalSum(1);
+  
   int i = 0;
   if(processNumber > 0){
   i = processNumber * partitions;
@@ -122,16 +90,12 @@ int main (int argc, char* argv[]) {
   partitions = n + n%totalProcesses;
   }
 
-  int localstart = processNumber * partitions;
 
   std::chrono::time_point<std::chrono::system_clock> start = std::chrono::system_clock::now();
-//std::cout<<"I am process "<< processNumber << " out of " << totalProcesses;
   //run itegration here 
   int count = 0;
   for( i; i < n; i++){
-	//std::cout<<"| "<<i<<" |";
   sum += partialIntegrations(functionid, a, b, n, i, intensity);
-  //std::cout<<"| "<<i << " |" << sum << "|";
   count++;
   if(count == partitions ){
 	break;
@@ -141,7 +105,6 @@ int main (int argc, char* argv[]) {
   //end of integration
 
   individualSums[0] = sum;
-	//std::cout<< "|before "<< individualSums[0] << " |";
   MPI_Reduce(&(individualSums[0]), &(finalSum[0]), 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 
   double finalValue = finalSum[0];
